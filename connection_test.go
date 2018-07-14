@@ -7,7 +7,6 @@ import (
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/go-pkgz/mongo/.vendor/github.com/stretchr/testify/require"
-	"github.com/hashicorp/go-multierror"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,9 +17,7 @@ type testRecord struct {
 
 func TestConnection_WithCollection(t *testing.T) {
 	c, err := write(t)
-	if err != nil {
-		return
-	}
+	require.NoError(t, err)
 	defer RemoveTestCollection(t, c)
 
 	var res []testRecord
@@ -52,7 +49,6 @@ func TestConnection_WithCollection(t *testing.T) {
 func TestConnection_WithCustomCollection(t *testing.T) {
 	c, err := MakeTestConnection(t)
 	require.NoError(t, err)
-
 	defer RemoveTestCollections(t, c, "coll2", "coll3")
 
 	// write co coll2
@@ -95,9 +91,7 @@ func TestConnection_WithCustomCollection(t *testing.T) {
 
 func TestConnection_WithCollectionNoDB(t *testing.T) {
 	c, err := write(t)
-	if err != nil {
-		return
-	}
+	require.NoError(t, err)
 	defer RemoveTestCollection(t, c)
 
 	var res []testRecord
@@ -110,9 +104,7 @@ func TestConnection_WithCollectionNoDB(t *testing.T) {
 
 func TestConnection_WithDB(t *testing.T) {
 	c, err := write(t)
-	if err != nil {
-		return
-	}
+	require.NoError(t, err)
 	defer RemoveTestCollection(t, c)
 
 	var res []testRecord
@@ -161,9 +153,8 @@ func TestConnection_WithCustomDB(t *testing.T) {
 
 func TestCleanup(t *testing.T) {
 	c, err := write(t)
-	if err != nil {
-		return
-	}
+	require.NoError(t, err)
+
 	var res []testRecord
 	err = c.WithCustomDB("test", func(dbase *mgo.Database) error {
 		return dbase.C(c.collection).Find(nil).All(&res)
@@ -181,21 +172,18 @@ func TestCleanup(t *testing.T) {
 
 func write(t *testing.T) (*Connection, error) {
 	c, err := MakeTestConnection(t)
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
+
 	err = c.WithCollection(func(coll *mgo.Collection) error {
-		errs := new(multierror.Error)
 		for i := 0; i < 100; i++ {
 			r := testRecord{
 				Symbol: fmt.Sprintf("symb-%02d", i%5),
 				Num:    i,
 			}
 			insertErr := coll.Insert(r)
-			assert.Nil(t, insertErr, fmt.Sprintf("insert %+v", r))
-			errs = multierror.Append(errs, insertErr)
+			require.Nil(t, insertErr, fmt.Sprintf("insert %+v", r))
 		}
-		return errs.ErrorOrNil()
+		return nil
 	})
 	return c, err
 }
