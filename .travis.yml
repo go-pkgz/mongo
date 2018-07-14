@@ -15,5 +15,6 @@ before_script:
   - sleep 3
 
 script:
-  - MONGO_TEST=mongodb://127.0.0.1:27017 go test -v ./...
+  - export MONGO_TEST=mongodb://127.0.0.1:27017
+  - go test -v ./...
   - $GOPATH/bin/goveralls -service=travis-ci
