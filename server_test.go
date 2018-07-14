@@ -1,7 +1,6 @@
 package mongo
 
 import (
-	"log"
 	"os"
 	"testing"
 	"time"
@@ -11,14 +10,7 @@ import (
 )
 
 func TestServer_NewServerGood(t *testing.T) {
-	mongoURL := os.Getenv("MONGO_TEST")
-	if mongoURL == "" {
-		mongoURL = "mongodb://mongo:27017/test?debug=true"
-		log.Printf("[WARN] no MONGO_TEST in env")
-	}
-	if mongoURL == "skip" {
-		return
-	}
+	mongoURL := os.Getenv("MONGO_TEST") + "/test?debug=true"
 	m, err := NewServerWithURL(mongoURL, 3*time.Second)
 	assert.Nil(t, err)
 	assert.NotNil(t, m)
