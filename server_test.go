@@ -17,6 +17,18 @@ func TestServer_NewServerGood(t *testing.T) {
 	assert.True(t, m.String() != "")
 }
 
+func TestServer_NewServerAuthSSL(t *testing.T) {
+	mongoURL := os.Getenv("MONGO_TEST_EXT")
+	if mongoURL == "" {
+		t.Skip("skipping test, no MONGO_TEST_EXT")
+		return
+	}
+	m, err := NewServerWithURL(mongoURL, 3*time.Second)
+	assert.Nil(t, err)
+	assert.NotNil(t, m)
+	assert.True(t, m.String() != "")
+}
+
 func TestServer_NewServerBad(t *testing.T) {
 	_, err := NewServerWithURL("mongodb://127.0.0.3:27017/test", 100*time.Millisecond)
 	assert.NotNil(t, err)
