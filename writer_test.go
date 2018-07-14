@@ -48,7 +48,28 @@ func TestWriter(t *testing.T) {
 	assert.Equal(t, 4, count(conn), "still 4 records, nothing left to flush")
 
 	assert.Nil(t, wr.Close())
+}
 
+func TestWriter_WithCollection(t *testing.T) {
+	conn, err := MakeTestConnection(t)
+	if err != nil {
+		return
+	}
+	defer RemoveTestCollection(t, conn)
+	defer RemoveTestCollections(t, conn, "coll1")
+
+	wr := NewBufferedWriter(3, conn).WithCollection("coll1")
+	for i := 0; i < 100; i++ {
+		require.NoError(t, wr.Write(bson.M{"key1": 1, "key2": 2}))
+	}
+	wr.Flush()
+
+	_ = conn.WithCustomCollection("coll1", func(coll *mgo.Collection) error {
+		res, err := coll.Find(nil).Count()
+		assert.Nil(t, err)
+		assert.Equal(t, 100, res)
+		return nil
+	})
 }
 
 func TestWriter_Parallel(t *testing.T) {
