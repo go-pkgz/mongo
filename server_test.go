@@ -98,3 +98,25 @@ func TestServer_parse(t *testing.T) {
 		assert.Equal(t, tt.params, params, "test #%d", i)
 	}
 }
+
+func TestGetMongoURLTesting(t *testing.T) {
+	keepURL := os.Getenv("MONGO_TEST")
+	defer os.Setenv("MONGO_TEST", keepURL)
+
+	os.Setenv("MONGO_TEST", "mongodb://127.0.0.1:27017/test?debug=true")
+	url := getMongoURL(t)
+	assert.Equal(t, os.Getenv("MONGO_TEST"), url)
+
+	os.Setenv("MONGO_TEST", "")
+	url = getMongoURL(t)
+	assert.Equal(t, "mongodb://mongo:27017", url)
+}
+
+func TestGetMongoURLTestingSkip(t *testing.T) {
+	keepURL := os.Getenv("MONGO_TEST")
+	defer os.Setenv("MONGO_TEST", keepURL)
+
+	os.Setenv("MONGO_TEST", "skip")
+	_ = getMongoURL(t)
+	assert.Fail(t, "should skip")
+}

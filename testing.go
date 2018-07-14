@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/globalsign/mgo"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,16 +19,7 @@ var once sync.Once
 // MakeTestConnection connects to MONGO_TEST url or "mongo" host (in no env) and returns new connection.
 // collection name randomized on each call
 func MakeTestConnection(t *testing.T) (*Connection, error) {
-	mongoURL := os.Getenv("MONGO_TEST")
-	if mongoURL == "" {
-		mongoURL = "mongodb://mongo:27017"
-		log.Printf("[WARN] no MONGO_TEST in env")
-	}
-	if mongoURL == "skip" {
-		log.Print("skip mongo test")
-		return nil, errors.New("skip")
-	}
-
+	mongoURL := getMongoURL(t)
 	once.Do(func() {
 		log.Print("[DEBUG] connect to mongo test instance")
 		srv, err := NewServerWithURL(mongoURL, 10*time.Second)
@@ -70,4 +60,16 @@ func RemoveTestCollections(t *testing.T, c *Connection, collections ...string) {
 		})
 	}
 
+}
+
+func getMongoURL(t *testing.T) string {
+	mongoURL := os.Getenv("MONGO_TEST")
+	if mongoURL == "" {
+		mongoURL = "mongodb://mongo:27017"
+		t.Logf("no MONGO_TEST in env, defaulted to %s", mongoURL)
+	}
+	if mongoURL == "skip" {
+		t.Skip("skip mongo test")
+	}
+	return mongoURL
 }
