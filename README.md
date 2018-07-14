@@ -1,4 +1,4 @@
-# Mongo
+# Mongo [![Build Status](https://travis-ci.org/go-pkgz/mongo.svg?branch=master)](https://travis-ci.org/go-pkgz/mongo) [![Coverage Status](https://coveralls.io/repos/github/go-pkgz/mongo/badge.svg?branch=master)](https://coveralls.io/github/go-pkgz/mongo?branch=master)
 
 Provides helpers on top of [mgo](https://github.com/globalsign/mgo)
 

@@ -10,8 +10,12 @@ services: mongodb
 before_install:
   - cp -rf .vendor vendor
 
+before_install:
+  - go get github.com/mattn/goveralls
+
 before_script:
-  - sleep 10
+  - sleep 3
 
 script:
   - MONGO_TEST=mongodb://127.0.0.1:27017 go test -v ./...
+  - $GOPATH/bin/goveralls -service=travis-ci
