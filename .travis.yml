@@ -9,8 +9,6 @@ services: mongodb
 
 before_install:
   - cp -rf .vendor vendor
-
-before_install:
   - go get github.com/mattn/goveralls
 
 before_script:
