@@ -10,5 +10,8 @@ services: mongodb
 before_install:
   - cp -rf .vendor vendor
 
+before_script:
+  - sleep 10
+
 script:
   - MONGO_TEST=mongo go test -v ./...
