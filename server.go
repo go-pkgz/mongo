@@ -24,9 +24,9 @@ type Server struct {
 
 // ServerParams optional set of parameters
 type ServerParams struct {
+	ConsistencyMode mgo.Mode
 	Delay           int  // initial delay to give mongo server some time to start, in case if mongo part of the same compose
 	Debug           bool // turn on mgo debug mode
-	ConsistencyMode mgo.Mode
 	SSL             bool
 }
 

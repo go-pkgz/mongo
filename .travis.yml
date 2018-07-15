@@ -10,6 +10,7 @@ services: mongodb
 before_install:
   - cp -rf .vendor vendor
   - go get github.com/mattn/goveralls
+  - go get gopkg.in/alecthomas/gometalinter.v2
 
 before_script:
   - sleep 3
@@ -17,4 +18,5 @@ before_script:
 script:
   - export MONGO_TEST=mongodb://127.0.0.1:27017
   - go test ./...
+  - $GOPATH/bin/gometalinter.v2 --exclude=test --exclude=mock --exclude=vendor ./...
   - $GOPATH/bin/goveralls -service=travis-ci
