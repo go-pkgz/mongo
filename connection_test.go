@@ -52,7 +52,7 @@ func TestConnection_WithCustomCollection(t *testing.T) {
 	defer RemoveTestCollections(t, c, "coll2", "coll3")
 
 	// write co coll2
-	err = c.WithCustomCollection("coll2", func(coll *mgo.Collection) error {
+	_ = c.WithCustomCollection("coll2", func(coll *mgo.Collection) error {
 		for i := 0; i < 22; i++ {
 			r := testRecord{
 				Symbol: fmt.Sprintf("symb-%02d", i%5),
@@ -64,7 +64,7 @@ func TestConnection_WithCustomCollection(t *testing.T) {
 	})
 
 	// write co coll3
-	err = c.WithCustomCollection("coll3", func(coll *mgo.Collection) error {
+	_ = c.WithCustomCollection("coll3", func(coll *mgo.Collection) error {
 		for i := 0; i < 33; i++ {
 			r := testRecord{
 				Symbol: fmt.Sprintf("symb-%02d", i%5),
