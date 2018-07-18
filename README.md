@@ -9,15 +9,15 @@ Provides helpers on top of [mgo](https://github.com/globalsign/mgo)
 
 ## Usage
 
-- `Server` object represents mongo instance and provides session accessor. Application usually creates one server object and uses it for anything needed with this particular mongo host or replica set.
+- `Server` represents mongo instance and provides session accessor. Application usually creates one server object and uses it for anything needed with this particular mongo host or replica set.
 
-- `Connection` object encapsulates session and provides auto-closable wrapper. Each requests runs inside one of With* function makes new mongo session and closes on completion.
+- `Connection` encapsulates session and provides auto-closable wrapper. Each requests runs inside one of With* function makes new mongo session and closes on completion.
 
-- `BufferedWriter` object implements buffered writer to mongo. Write method caching internally till it reached buffer size. Flush methods can be called manually as well at any time.
+- `BufferedWriter` implements buffered writer to mongo. Write method caching internally till it reached buffer size. Flush methods can be called manually at any time.
 
 
 ```golang
-    m, err := NewServerWithURL(mongodb://127.0.0.1:27017/test?debug=true, 3*time.Second)
+    m, err := NewServerWithURL("mongodb://127.0.0.1:27017/test?debug=true", 3*time.Second)
     if err != nil {
         panic("can't make mongo server")
     } 
@@ -43,7 +43,16 @@ Provides helpers on top of [mgo](https://github.com/globalsign/mgo)
     
 ```
 
+## Dependencies 
+
+- [globalsign/mgo](https://github.com/globalsign/mgo) - mgo mongo driver
+- [stretchr/testify/](https://github.com/stretchr/testify) - testing library (test-only dependency)
+
 ## Testing
 
 `testing.go` helps to create test for real mongo (not mocks)
+
+- `mongo.MakeTestConnection` creates `mongo.Connection` for url defined in env `MONGO_TEST`. If not defined `mongodb://mongo:27017` used. By default it will use random connection with prefix `test_` in `test` DB.
+- `mongo.RemoveTestCollection` - drops collection used by `MakeTestConnection`
+- `mongo.RemoveTestCollections` - drops user-defined collections from `test` DB
 
