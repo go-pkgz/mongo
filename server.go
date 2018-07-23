@@ -31,7 +31,7 @@ type ServerParams struct {
 }
 
 // NewServerWithURL makes mongo server from url like
-// mongodb://remark42:password@127.0.0.1t:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin
+// mongodb://remark42:password@127.0.0.1:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin
 func NewServerWithURL(url string, timeout time.Duration) (res *Server, err error) {
 	dial, params, err := parseURL(url, timeout)
 	if err != nil {
