@@ -7,12 +7,13 @@ import (
 
 	"github.com/globalsign/mgo"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestServer_NewServerGood(t *testing.T) {
 	mongoURL := os.Getenv("MONGO_TEST") + "/test?debug=true"
 	m, err := NewServerWithURL(mongoURL, 3*time.Second)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, m)
 	assert.True(t, m.String() != "")
 }
