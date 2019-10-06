@@ -1,10 +1,11 @@
 # Mongo [![Build Status](https://travis-ci.org/go-pkgz/mongo.svg?branch=master)](https://travis-ci.org/go-pkgz/mongo) [![Go Report Card](https://goreportcard.com/badge/github.com/go-pkgz/mongo)](https://goreportcard.com/report/github.com/go-pkgz/mongo) [![Coverage Status](https://coveralls.io/repos/github/go-pkgz/mongo/badge.svg?branch=master)](https://coveralls.io/github/go-pkgz/mongo?branch=master)
 
-Provides helpers on top of [mgo](https://github.com/globalsign/mgo)
+Provides helpers on top of [mgo](https://github.com/globalsign/mgo) and the official [mongo-go-driver](https://github.com/mongodb/mongo-go-driver)
 
 ## Install and update
 
-`go get -u github.com/go-pkgz/mongo`
+- `go get -u github.com/go-pkgz/mongo/v2` - for the official mongo driver
+- `go get -u github.com/go-pkgz/mongo` - for mgo (legacy) driver
 
 
 ## Usage

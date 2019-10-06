@@ -8,6 +8,7 @@ import (
 	"time"
 
 	log "github.com/go-pkgz/lgr"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	driver "go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -27,6 +28,7 @@ func MakeTestConnection(t *testing.T) (mg *driver.Client, coll *driver.Collectio
 	coll = mg.Database("test").Collection(collName)
 	teardown = func() {
 		require.NoError(t, coll.Drop(context.Background()))
+		assert.NoError(t, mg.Disconnect(context.Background()))
 	}
 
 	_ = coll.Drop(context.Background())

@@ -2,6 +2,7 @@ module github.com/go-pkgz/mongo/v2
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
 	github.com/go-pkgz/lgr v0.2.2
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
