@@ -20,7 +20,7 @@ type BufferedWriter interface {
 // BufferedWriterMgo collects records in local buffer and flushes them as filled. Thread safe
 // by default using both DB and collection from provided connection.
 // Collection can be customized by WithCollection method. Optional flush duration to save on interval
-type BufferedWriterMgo struct {
+type BufferedWriterMongo struct {
 	client         *driver.Client
 	bufferSize     int
 	db, collection string
@@ -36,11 +36,11 @@ type BufferedWriterMgo struct {
 }
 
 // NewBufferedWriter makes batch writer for given size and connection
-func NewBufferedWriter(client *driver.Client, db, collection string, size int) *BufferedWriterMgo {
+func NewBufferedWriter(client *driver.Client, db, collection string, size int) *BufferedWriterMongo {
 	if size == 0 {
 		size = 1
 	}
-	return &BufferedWriterMgo{
+	return &BufferedWriterMongo{
 		bufferSize: size,
 		db:         db,
 		collection: collection,
@@ -50,13 +50,13 @@ func NewBufferedWriter(client *driver.Client, db, collection string, size int) *
 }
 
 // WithCollection sets custom collection to use with writer
-func (bw *BufferedWriterMgo) WithCollection(collection string) *BufferedWriterMgo {
+func (bw *BufferedWriterMongo) WithCollection(collection string) *BufferedWriterMongo {
 	bw.collection = collection
 	return bw
 }
 
 // WithAutoFlush sets auto flush duration
-func (bw *BufferedWriterMgo) WithAutoFlush(duration time.Duration) *BufferedWriterMgo {
+func (bw *BufferedWriterMongo) WithAutoFlush(duration time.Duration) *BufferedWriterMongo {
 	bw.flushDuration = duration
 	if duration > 0 { // activate background auto-flush
 		bw.once.Do(func() {
@@ -88,7 +88,7 @@ func (bw *BufferedWriterMgo) WithAutoFlush(duration time.Duration) *BufferedWrit
 }
 
 // Write to buffer and, as filled, to mongo. If flushDuration defined check for automatic flush
-func (bw *BufferedWriterMgo) Write(rec interface{}) error {
+func (bw *BufferedWriterMongo) Write(rec interface{}) error {
 	return bw.synced(func() error {
 		bw.lastWriteTime = time.Now()
 		bw.buffer = append(bw.buffer, rec)
@@ -103,7 +103,7 @@ func (bw *BufferedWriterMgo) Write(rec interface{}) error {
 }
 
 // Flush writes everything left in buffer to mongo
-func (bw *BufferedWriterMgo) Flush() error {
+func (bw *BufferedWriterMongo) Flush() error {
 	err := bw.synced(func() error {
 		err := bw.writeBuffer()
 		bw.buffer = bw.buffer[0:0]
@@ -116,7 +116,7 @@ func (bw *BufferedWriterMgo) Flush() error {
 }
 
 // Close flushes all in-fly records and terminates background auto-flusher
-func (bw *BufferedWriterMgo) Close() (err error) {
+func (bw *BufferedWriterMongo) Close() (err error) {
 	return bw.synced(func() error {
 		err = bw.writeBuffer()
 		if bw.flushDuration > 0 {
@@ -128,7 +128,7 @@ func (bw *BufferedWriterMgo) Close() (err error) {
 }
 
 // writeBuffer sends all collected records to mongo
-func (bw *BufferedWriterMgo) writeBuffer() (err error) {
+func (bw *BufferedWriterMongo) writeBuffer() (err error) {
 
 	if len(bw.buffer) == 0 {
 		return nil
@@ -139,7 +139,7 @@ func (bw *BufferedWriterMgo) writeBuffer() (err error) {
 	return err
 }
 
-func (bw *BufferedWriterMgo) synced(fn func() error) error {
+func (bw *BufferedWriterMongo) synced(fn func() error) error {
 	bw.lock.Lock()
 	defer bw.lock.Unlock()
 	return fn()

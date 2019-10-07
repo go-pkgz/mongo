@@ -47,8 +47,10 @@ func TestWriter(t *testing.T) {
 func TestWriter_WithCollection(t *testing.T) {
 
 	mg, coll, teardown := MakeTestConnection(t)
-	defer teardown()
-	defer RemoveTestCollection(t, mg.Database("test").Collection("coll1"))
+	defer func() {
+		_ = coll.Drop(context.Background())
+		teardown()
+	}()
 	wr := NewBufferedWriter(mg, "test", coll.Name(), 3).WithCollection("coll1")
 	for i := 0; i < 100; i++ {
 		require.NoError(t, wr.Write(bson.M{"key1": 1, "key2": 2}))

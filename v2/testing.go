@@ -35,12 +35,6 @@ func MakeTestConnection(t *testing.T) (mg *driver.Client, coll *driver.Collectio
 	return mg, coll, teardown
 }
 
-// RemoveTestCollection removes all records and drop collection from connection
-func RemoveTestCollection(t *testing.T, coll *driver.Collection) {
-	log.Printf("[DEBUG] clean test collection %s", coll.Name())
-	_ = coll.Drop(context.Background())
-}
-
 func getMongoURL(t *testing.T) string {
 	mongoURL := os.Getenv("MONGO_TEST")
 	if mongoURL == "" {
