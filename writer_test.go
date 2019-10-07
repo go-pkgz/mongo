@@ -1,93 +1,80 @@
 package mongo
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson"
+	driver "go.mongodb.org/mongo-driver/mongo"
 )
 
 func TestWriter(t *testing.T) {
 
-	count := func(conn *Connection) (res int) {
-		_ = conn.WithCollection(func(coll *mgo.Collection) error {
-			var err error
-			res, err = coll.Find(nil).Count()
-			assert.Nil(t, err)
-			return nil
-		})
-		return res
+	count := func(coll *driver.Collection) (res int) {
+		count, err := coll.CountDocuments(context.Background(), bson.M{})
+		assert.Nil(t, err)
+		return int(count)
 	}
 
-	conn, err := MakeTestConnection(t)
-	if err != nil {
-		return
-	}
-	defer RemoveTestCollection(t, conn)
+	mg, coll, teardown := MakeTestConnection(t)
+	defer teardown()
 
-	var wr BufferedWriter = NewBufferedWriter(3, conn)
+	var wr BufferedWriter = NewBufferedWriter(mg, "test", coll.Name(), 3)
 	assert.Nil(t, wr.Write(bson.M{"key1": "val1"}), "write rec #1")
 	assert.Nil(t, wr.Write(bson.M{"key2": "val2"}), "write rec #2")
 
-	assert.Equal(t, 0, count(conn), "nothing yet")
+	assert.Equal(t, 0, count(coll), "nothing yet")
 
 	assert.Nil(t, wr.Write(bson.M{"key3": "val3"}), "write rec #3")
-	assert.Equal(t, 3, count(conn), "all 3 records in")
+	assert.Equal(t, 3, count(coll), "all 3 records in")
 
 	assert.Nil(t, wr.Write(bson.M{"key4": "val4"}), "write rec #4")
-	assert.Equal(t, 3, count(conn), "still 3 records")
+	assert.Equal(t, 3, count(coll), "still 3 records")
 
 	assert.Nil(t, wr.Flush())
-	assert.Equal(t, 4, count(conn), "all 4 records")
+	assert.Equal(t, 4, count(coll), "all 4 records")
 
 	assert.Nil(t, wr.Flush())
-	assert.Equal(t, 4, count(conn), "still 4 records, nothing left to flush")
+	assert.Equal(t, 4, count(coll), "still 4 records, nothing left to flush")
 
 	assert.Nil(t, wr.Close())
 }
 
 func TestWriter_WithCollection(t *testing.T) {
-	conn, err := MakeTestConnection(t)
-	if err != nil {
-		return
-	}
-	defer RemoveTestCollection(t, conn)
-	defer RemoveTestCollections(t, conn, "coll1")
 
-	wr := NewBufferedWriter(3, conn).WithCollection("coll1")
+	mg, coll, teardown := MakeTestConnection(t)
+	defer func() {
+		_ = coll.Drop(context.Background())
+		teardown()
+	}()
+	wr := NewBufferedWriter(mg, "test", coll.Name(), 3).WithCollection("coll1")
 	for i := 0; i < 100; i++ {
 		require.NoError(t, wr.Write(bson.M{"key1": 1, "key2": 2}))
 	}
-	wr.Flush()
+	require.NoError(t, wr.Flush())
 
-	_ = conn.WithCustomCollection("coll1", func(coll *mgo.Collection) error {
-		res, err := coll.Find(nil).Count()
-		assert.Nil(t, err)
-		assert.Equal(t, 100, res)
-		return nil
-	})
+	coll = mg.Database("test").Collection("coll1")
+	count, err := coll.CountDocuments(context.Background(), bson.M{})
+	assert.Nil(t, err)
+	assert.Equal(t, 100, int(count))
 }
 
 func TestWriter_Parallel(t *testing.T) {
-	conn, err := MakeTestConnection(t)
-	if err != nil {
-		return
-	}
-	defer RemoveTestCollection(t, conn)
+	mg, coll, teardown := MakeTestConnection(t)
+	defer teardown()
 
 	var wg sync.WaitGroup
-	wr := NewBufferedWriter(75, conn)
+	wr := NewBufferedWriter(mg, "test", coll.Name(), 75)
 
 	writeMany := func() {
 		for i := 0; i < 100; i++ {
 			require.NoError(t, wr.Write(bson.M{"key1": 1, "key2": 2}))
 		}
-		wr.Flush()
+		require.NoError(t, wr.Flush())
 		wg.Done()
 	}
 
@@ -98,31 +85,23 @@ func TestWriter_Parallel(t *testing.T) {
 
 	wg.Wait()
 
-	_ = conn.WithCollection(func(coll *mgo.Collection) error {
-		res, err := coll.Find(nil).Count()
-		assert.Nil(t, err)
-		assert.Equal(t, 100*16, res)
-		return nil
-	})
+	count, err := coll.CountDocuments(context.Background(), bson.M{})
+	assert.Nil(t, err)
+	assert.Equal(t, 100*16, int(count))
+
 	assert.Nil(t, wr.Close())
 }
 
 func TestWriter_WithAuthFlush(t *testing.T) {
-	conn, err := MakeTestConnection(t)
-	if err != nil {
-		return
-	}
-	defer RemoveTestCollection(t, conn)
+	mg, coll, teardown := MakeTestConnection(t)
+	defer teardown()
 
-	var wr BufferedWriter = NewBufferedWriter(3, conn).WithAutoFlush(500 * time.Millisecond)
+	var wr BufferedWriter = NewBufferedWriter(mg, "test", coll.Name(), 3).WithAutoFlush(500 * time.Millisecond)
+
 	count := func() (res int) {
-		_ = conn.WithCollection(func(coll *mgo.Collection) error {
-			var err error
-			res, err = coll.Find(nil).Count()
-			assert.Nil(t, err)
-			return nil
-		})
-		return res
+		count, err := coll.CountDocuments(context.Background(), bson.M{})
+		assert.Nil(t, err)
+		return int(count)
 	}
 
 	assert.Nil(t, wr.Write(bson.M{"key1": "val1"}), "write rec #1")
@@ -149,14 +128,11 @@ func TestWriter_WithAuthFlush(t *testing.T) {
 }
 
 func TestWriter_ParallelWithAutoFlush(t *testing.T) {
-	conn, err := MakeTestConnection(t)
-	if err != nil {
-		return
-	}
-	defer RemoveTestCollection(t, conn)
+	mg, coll, teardown := MakeTestConnection(t)
+	defer teardown()
 
 	var wg sync.WaitGroup
-	wr := NewBufferedWriter(75, conn).WithAutoFlush(time.Millisecond)
+	wr := NewBufferedWriter(mg, "test", coll.Name(), 75).WithAutoFlush(time.Millisecond)
 
 	writeMany := func() {
 		for i := 0; i < 100; i++ {
@@ -174,11 +150,9 @@ func TestWriter_ParallelWithAutoFlush(t *testing.T) {
 
 	wg.Wait()
 
-	_ = conn.WithCollection(func(coll *mgo.Collection) error {
-		res, err := coll.Find(nil).Count()
-		assert.Nil(t, err)
-		assert.Equal(t, 100*16, res)
-		return nil
-	})
+	count, err := coll.CountDocuments(context.Background(), bson.M{})
+	assert.Nil(t, err)
+	assert.Equal(t, 100*16, int(count))
+
 	assert.Nil(t, wr.Close())
 }

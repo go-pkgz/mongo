@@ -1,66 +1,38 @@
 package mongo
 
 import (
+	"context"
 	"fmt"
 	"os"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/globalsign/mgo"
 	log "github.com/go-pkgz/lgr"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	driver "go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-var conn *Connection
-var once sync.Once
 
 // MakeTestConnection connects to MONGO_TEST url or "mongo" host (in no env) and returns new connection.
 // collection name randomized on each call
-func MakeTestConnection(t *testing.T) (*Connection, error) {
+func MakeTestConnection(t *testing.T) (mg *driver.Client, coll *driver.Collection, teardown func()) {
 	mongoURL := getMongoURL(t)
-	once.Do(func() {
-		log.Print("[DEBUG] connect to mongo test instance")
-		srv, err := NewServerWithURL(mongoURL, 10*time.Second)
-		assert.Nil(t, err, "failed to dial")
-		collName := fmt.Sprintf("test_%d", time.Now().Nanosecond())
-		conn = NewConnection(srv, "test", collName)
-	})
-	RemoveTestCollection(t, conn)
-	return conn, nil
-}
-
-// RemoveTestCollection removes all records and drop collection from connection
-func RemoveTestCollection(t *testing.T, c *Connection) {
-	log.Printf("[DEBUG] clean test collection %+v", c.collection)
-	_ = c.WithCollection(func(coll *mgo.Collection) error {
-		_, e := coll.RemoveAll(nil)
-		require.Nil(t, e, "failed to remove records, %s", e)
-		e = coll.DropCollection()
-		if e != nil && e.Error() != "ns not found" {
-			require.Nil(t, e, "failed to drop collection, %s", e)
-		}
-		return e
-	})
-}
-
-// RemoveTestCollections clears passed collections
-func RemoveTestCollections(t *testing.T, c *Connection, collections ...string) {
-	log.Printf("[DEBUG] clean test collections %+v", collections)
-	for _, collection := range collections {
-		_ = c.WithCustomCollection(collection, func(coll *mgo.Collection) error {
-			_, e := coll.RemoveAll(nil)
-			require.Nil(t, e, "failed to remove records, %s", e)
-			e = coll.DropCollection()
-			if e != nil && e.Error() != "ns not found" {
-				require.Nil(t, e, "failed to drop collection, %s", e)
-			}
-			return e
-		})
+	log.Print("[DEBUG] connect to mongo test instance")
+	opts := options.ClientOptions{}
+	opts.SetAppName("test")
+	opts.SetConnectTimeout(time.Second)
+	mg, err := driver.Connect(context.Background(), options.Client().ApplyURI(mongoURL))
+	require.NoError(t, err, "failed to make mongo client")
+	collName := fmt.Sprintf("test_%d", time.Now().Nanosecond())
+	coll = mg.Database("test").Collection(collName)
+	teardown = func() {
+		require.NoError(t, coll.Drop(context.Background()))
+		assert.NoError(t, mg.Disconnect(context.Background()))
 	}
 
+	_ = coll.Drop(context.Background())
+	return mg, coll, teardown
 }
 
 func getMongoURL(t *testing.T) string {
