@@ -25,11 +25,11 @@ func TestServer_NewServerBad(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
-	_, _, err := Connect(ctx, options.Client(), "mongodb://127.0.0.3:27017/test")
+	_, _, err := Connect(ctx, options.Client(), "mongodb://127.0.0.1:27019/test")
 	assert.NotNil(t, err)
 	t.Log(err)
 
-	_, _, err = Connect(ctx, options.Client(), "mongodb://127.0.0.3:27017/test?blah=xxx")
+	_, _, err = Connect(ctx, options.Client(), "mongodb://127.0.0.1:27019/test?blah=xxx")
 	assert.NotNil(t, err)
 	t.Log(err)
 }
