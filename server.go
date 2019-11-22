@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// Connect to mongo url and return client. Supports extranded url params to pass a set of custom values in the urlr
+// Connect to mongo url and return client. Supports expanded url params to pass a set of custom values in the url
 func Connect(ctx context.Context, opts *options.ClientOptions, url string, extras ...string) (*driver.Client, map[string]interface{}, error) {
 	mongoURL, extMap, err := parseExtMongoURI(url, extras)
 	if err != nil {
