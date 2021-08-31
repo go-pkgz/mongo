@@ -20,7 +20,7 @@ jobs:
       - name: launch mongodb
         uses: wbari/start-mongoDB@v0.2
         with:
-          mongoDBVersion: "4.0"
+          mongoDBVersion: "5.0"
 
       - name: checkout
         uses: actions/checkout@v2
@@ -36,7 +36,7 @@ jobs:
 
       - name: install golangci-lint and goveralls
         run: |
-          curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $GITHUB_WORKSPACE v1.24.0
+          curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $GITHUB_WORKSPACE v1.41.0
           GO111MODULE=off go get -u -v github.com/mattn/goveralls
 
       - name: run linters
