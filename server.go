@@ -2,12 +2,13 @@ package mongo
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/url"
 	"strings"
 
-	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	driver "go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -17,21 +18,26 @@ import (
 func Connect(ctx context.Context, opts *options.ClientOptions, url string, extras ...string) (*driver.Client, map[string]interface{}, error) {
 	mongoURL, extMap, err := parseExtMongoURI(url, extras)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "can't parse mongo url")
+		return nil, nil, fmt.Errorf("can't parse mongo url: %w", err)
 	}
 
 	res, err := driver.Connect(ctx, opts.ApplyURI(mongoURL))
-	if err == nil {
-		err = res.Ping(ctx, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("can't connect to mongo: %w", err)
 	}
-	return res, extMap, errors.Wrap(err, "failed to connect mongo")
+
+	if err = res.Ping(ctx, nil); err != nil {
+		return nil, nil, fmt.Errorf("can't ping mongo: %w", err)
+	}
+
+	return res, extMap, nil
 }
 
 // parseExtMongoURI extracts extra params from extras list and remove them from the url.
 // Input example: mongodb://user:password@127.0.0.1:27017/test?ssl=true&ava_db=db1&ava_coll=coll1
 func parseExtMongoURI(uri string, extras []string) (string, map[string]interface{}, error) {
 	if uri == "" {
-		return "", nil, errors.Errorf("empty url")
+		return "", nil, errors.New("empty url")
 	}
 	if len(extras) == 0 {
 		return uri, nil, nil
