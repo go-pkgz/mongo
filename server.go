@@ -60,11 +60,11 @@ func parseExtMongoURI(uri string, extras []string) (string, map[string]interface
 	return u.String(), exMap, nil
 }
 
-// PrepSort prepares sort params for mongo driver and returns IndexModel.
+// PrepSort prepares sort params for mongo driver and returns bson.D
 // Input string provided as [+|-]field1,[+|-]field2,[+|-]field3...
 // + means ascending, - means descending. Lack of + or - in the beginning of the field name means ascending sort.
-func PrepSort(sort ...string) driver.IndexModel {
-	keys := bson.D{}
+func PrepSort(sort ...string) bson.D {
+	res := bson.D{}
 	for _, s := range sort {
 		if s == "" {
 			continue
@@ -72,14 +72,19 @@ func PrepSort(sort ...string) driver.IndexModel {
 		s = strings.TrimSpace(s)
 		switch s[0] {
 		case '-':
-			keys = append(keys, bson.E{Key: s[1:], Value: -1})
+			res = append(res, bson.E{Key: s[1:], Value: -1})
 		case '+':
-			keys = append(keys, bson.E{Key: s[1:], Value: 1})
+			res = append(res, bson.E{Key: s[1:], Value: 1})
 		default:
-			keys = append(keys, bson.E{Key: s, Value: 1})
+			res = append(res, bson.E{Key: s, Value: 1})
 		}
 	}
-	return driver.IndexModel{Keys: keys}
+	return res
+}
+
+// PrepIndex prepares index params for mongo driver and returns IndexModel
+func PrepIndex(keys ...string) driver.IndexModel {
+	return driver.IndexModel{Keys: PrepSort(keys...)}
 }
 
 // Bind request json body from io.Reader to bson record
