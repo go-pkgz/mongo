@@ -92,12 +92,11 @@ func TestWriter_Parallel(t *testing.T) {
 	assert.Nil(t, wr.Close())
 }
 
-func TestWriter_WithAuthFlush(t *testing.T) {
+func TestWriter_WithAutoFlush(t *testing.T) {
 	mg, coll, teardown := MakeTestConnection(t)
 	defer teardown()
 
-	var wr BufferedWriter = NewBufferedWriter(mg, "test", coll.Name(), 3).WithAutoFlush(500 * time.Millisecond)
-
+	var wr BufferedWriter = NewBufferedWriter(mg, "test", coll.Name(), 3).WithAutoFlush(300 * time.Millisecond)
 	count := func() (res int) {
 		count, err := coll.CountDocuments(context.Background(), bson.M{})
 		assert.Nil(t, err)
@@ -107,6 +106,7 @@ func TestWriter_WithAuthFlush(t *testing.T) {
 	assert.Nil(t, wr.Write(bson.M{"key1": "val1"}), "write rec #1")
 	assert.Nil(t, wr.Write(bson.M{"key2": "val2"}), "write rec #2")
 	assert.Equal(t, 0, count(), "nothing yet")
+
 	time.Sleep(600 * time.Millisecond)
 	assert.Equal(t, 2, count(), "2 records flushed")
 
