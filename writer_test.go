@@ -139,7 +139,8 @@ func TestWriter_ParallelWithAutoFlush(t *testing.T) {
 			require.NoError(t, wr.Write(bson.M{"key1": 1, "key2": 2}))
 			time.Sleep(time.Millisecond * 3)
 		}
-		wr.Flush()
+		err := wr.Flush()
+		require.NoError(t, err)
 		wg.Done()
 	}
 

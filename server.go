@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"strings"
 
@@ -15,8 +14,8 @@ import (
 )
 
 // Connect to mongo url and return client. Supports expanded url params to pass a set of custom values in the url
-func Connect(ctx context.Context, opts *options.ClientOptions, url string, extras ...string) (*driver.Client, map[string]interface{}, error) {
-	mongoURL, extMap, err := parseExtMongoURI(url, extras)
+func Connect(ctx context.Context, opts *options.ClientOptions, u string, extras ...string) (*driver.Client, map[string]interface{}, error) {
+	mongoURL, extMap, err := parseExtMongoURI(u, extras)
 	if err != nil {
 		return nil, nil, fmt.Errorf("can't parse mongo url: %w", err)
 	}
@@ -35,29 +34,29 @@ func Connect(ctx context.Context, opts *options.ClientOptions, url string, extra
 
 // parseExtMongoURI extracts extra params from extras list and remove them from the url.
 // Input example: mongodb://user:password@127.0.0.1:27017/test?ssl=true&ava_db=db1&ava_coll=coll1
-func parseExtMongoURI(uri string, extras []string) (string, map[string]interface{}, error) {
-	if uri == "" {
+func parseExtMongoURI(u string, extras []string) (host string, ex map[string]interface{}, err error) {
+	if u == "" {
 		return "", nil, errors.New("empty url")
 	}
 	if len(extras) == 0 {
-		return uri, nil, nil
+		return u, nil, nil
 	}
 	exMap := map[string]interface{}{}
 
-	u, err := url.Parse(uri)
+	uu, err := url.Parse(u)
 	if err != nil {
 		return "", nil, err
 	}
 
-	q := u.Query()
+	q := uu.Query()
 	for _, ex := range extras {
-		if val := u.Query().Get(ex); val != "" {
+		if val := uu.Query().Get(ex); val != "" {
 			exMap[ex] = val
 		}
 		q.Del(ex)
 	}
-	u.RawQuery = q.Encode()
-	return u.String(), exMap, nil
+	uu.RawQuery = q.Encode()
+	return uu.String(), exMap, nil
 }
 
 // PrepSort prepares sort params for mongo driver and returns bson.D
@@ -89,7 +88,7 @@ func PrepIndex(keys ...string) driver.IndexModel {
 
 // Bind request json body from io.Reader to bson record
 func Bind(r io.Reader, v interface{}) error {
-	body, err := ioutil.ReadAll(r)
+	body, err := io.ReadAll(r)
 	if err != nil {
 		return err
 	}
