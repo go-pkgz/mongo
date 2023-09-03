@@ -256,6 +256,11 @@ func TestSecretsMongoUrls(t *testing.T) {
 			urls: []string{"mongodb://root@mongo:27017/admin?db=mydb&collection=mycoll"},
 			want: []string{},
 		},
+		{
+			name: "URL With Missing Password",
+			urls: []string{"mongodb://user:@localhost:27017/database"},
+			want: []string{},
+		},
 	}
 
 	for _, tt := range tests {
