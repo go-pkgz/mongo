@@ -191,3 +191,77 @@ func TestBind(t *testing.T) {
 	t.Logf("%+v", res)
 	assert.Equal(t, bson.M{"trade_dt": bson.M{"$gte": primitive.DateTime(1597636800000), "$lt": primitive.DateTime(1598068799000)}}, res.Filter)
 }
+
+func TestSecretsMongoUrls(t *testing.T) {
+	tests := []struct {
+		name string
+		urls []string
+		want []string
+	}{
+		{
+			name: "Standard MongoDB URL",
+			urls: []string{"mongodb://user:password@localhost:27017/database"},
+			want: []string{"password"},
+		},
+		{
+			name: "MongoDB+SRV URL",
+			urls: []string{"mongodb+srv://user:password@localhost/database"},
+			want: []string{"password"},
+		},
+		{
+			name: "Mixed URLs",
+			urls: []string{"mongodb://user:password@localhost:27017/database", "mongodb+srv://user:secret@localhost/database"},
+			want: []string{"password", "secret"},
+		},
+		{
+			name: "Invalid URLs",
+			urls: []string{"mongodb://user@localhost:27017/database", "http://localhost"},
+			want: []string{},
+		},
+		{
+			name: "Empty URLs",
+			urls: []string{},
+			want: []string{},
+		},
+		{
+			name: "Empty String",
+			urls: []string{""},
+			want: []string{},
+		},
+		{
+			name: "Non-Matching String",
+			urls: []string{"blah"},
+			want: []string{},
+		},
+		{
+			name: "URL Without Credentials",
+			urls: []string{"mongodb://mongo:27017/test?db=test&collection=DEMO"},
+			want: []string{},
+		},
+		{
+			name: "URL Without Database",
+			urls: []string{"mongodb://db.example.com:27017?db=mydb&collection=mycoll"},
+			want: []string{},
+		},
+		{
+			name: "URL With Credentials",
+			urls: []string{
+				"mongodb://root:abcdefg@mongo:27017/admin?db=mydb&collection=mycoll",
+				"mongodb://root:xyz@mongo:27017/admin?db=mydb&collection=mycoll",
+			},
+			want: []string{"abcdefg", "xyz"},
+		},
+		{
+			name: "URL Without Password",
+			urls: []string{"mongodb://root@mongo:27017/admin?db=mydb&collection=mycoll"},
+			want: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SecretsMongoUrls(tt.urls...)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
