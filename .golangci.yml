@@ -33,17 +33,13 @@ linters:
     - ineffassign
     - stylecheck
     - gochecknoinits
-    - exportloopref
+    - copyloopvar
     - gocritic
     - nakedret
     - gosimple
     - prealloc
   fast: false
   disable-all: true
-
-run:
-  output:
-    format: tab
 
 issues:
   exclude-rules:
