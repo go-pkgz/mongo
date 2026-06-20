@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/go-pkgz/lgr v0.11.1
 	github.com/stretchr/testify v1.9.0
-	go.mongodb.org/mongo-driver v1.16.0
+	go.mongodb.org/mongo-driver v1.17.7
 )
 
 require (
